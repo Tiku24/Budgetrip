@@ -11,10 +11,10 @@ class HomeRepository(private val budgetripApi: BudgetripApi) {
             if (response.isSuccessful){
                 ResultResource.Success(response.body()!!)
             }else{
-                ResultResource.Error(response.message())
+                ResultResource.Error("Data Not Found")
             }
         }catch (e: Exception){
-            ResultResource.Error(e.message ?: "Unknown error")
+            ResultResource.Error("Check Internet Connection")
             }
         }
     }

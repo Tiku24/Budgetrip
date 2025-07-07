@@ -35,6 +35,7 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
                 }
                 is ResultResource.Error -> {
                     _state.value = HomeState.Error(data.message)
+                    Log.d("error", "fetchData: ${data.message}")
                     _event.emit(HomeEvent.showErrorMessage(data.message))
                 }
                 is ResultResource.Loading -> {

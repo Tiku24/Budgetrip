@@ -59,15 +59,15 @@ val Typography = Typography(
     ),
     titleLarge = TextStyle(
         fontFamily = CustomFontFamily,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.Bold,
         fontSize = 22.sp,
         lineHeight = 28.sp,
         letterSpacing = 0.sp
     ),
     titleMedium = TextStyle(
         fontFamily = CustomFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
         lineHeight = 24.sp,
         letterSpacing = 0.15.sp
     ),

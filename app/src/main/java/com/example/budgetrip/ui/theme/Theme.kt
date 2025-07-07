@@ -21,7 +21,8 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = CustomWhite,
     onSurface = CustomWhite,
     error = CustomRed,
-    onError = CustomWhite
+    onError = CustomWhite,
+    surfaceVariant = CustomGrey
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -34,7 +35,8 @@ private val LightColorScheme = lightColorScheme(
     onBackground = CustomDark,
     onSurface = CustomDark,
     error = CustomRed,
-    onError = CustomWhite
+    onError = CustomWhite,
+    surfaceVariant = CustomGrey
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
