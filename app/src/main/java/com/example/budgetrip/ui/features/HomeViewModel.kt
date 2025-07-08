@@ -1,8 +1,12 @@
 package com.example.budgetrip.ui.features
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.budgetrip.data.model.AddTripRequest
 import com.example.budgetrip.data.network.ResultResource
 import com.example.budgetrip.data.repository.HomeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,6 +15,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -18,8 +28,90 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
     private val _state = MutableStateFlow<HomeState>(HomeState.Loading)
     val state = _state.asStateFlow()
 
+    var isDialogShown = mutableStateOf(false)
+        private set
+
+    var isStartDatePickerShown = mutableStateOf(false)
+        private set
+    var isEndDatePickerShown = mutableStateOf(false)
+        private set
+
+    fun onDismissDialog() {
+        isDialogShown.value = !isDialogShown.value
+    }
+
+    private val _name = MutableStateFlow("")
+    val name = _name.asStateFlow()
+
+    private val _destination = MutableStateFlow("")
+    val destination = _destination.asStateFlow()
+
+    private val _totalBudget = MutableStateFlow("")
+    val totalBudget = _totalBudget.asStateFlow()
+
+    private val _spentAmount = MutableStateFlow("")
+    val spentAmount = _spentAmount.asStateFlow()
+
+    private val _category = MutableStateFlow("")
+    val category = _category.asStateFlow()
+
+    private val _startDate = MutableStateFlow("")
+    val startDate = _startDate.asStateFlow()
+
+    private val _endDate = MutableStateFlow("")
+    val endDate = _endDate.asStateFlow()
+
+    private val _notes = MutableStateFlow("")
+    val notes = _notes.asStateFlow()
+
+    private val _addState = MutableStateFlow<HomeState>(HomeState.Loading)
+    val addState = _addState.asStateFlow()
+
     private val _event = MutableSharedFlow<HomeEvent>()
     val event = _event.asSharedFlow()
+
+
+    fun onNameChange(name: String) {
+        _name.value = name
+    }
+
+    fun onDestinationChange(destination: String) {
+        _destination.value = destination
+    }
+
+    fun onTotalBudgetChange(totalBudget: String) {
+        _totalBudget.value = totalBudget
+    }
+
+    fun onSpentAmountChange(spentAmount: String) {
+        _spentAmount.value = spentAmount
+    }
+
+    fun onCategoryChange(category: String) {
+        _category.value = category
+    }
+
+
+    fun onEndDateChange(timeInMillis: Long?) {
+        timeInMillis?.let {
+            val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val date = Date(it)
+            _endDate.value = format.format(date)
+        }
+    }
+
+    fun onNotesChange(notes: String) {
+        _notes.value = notes
+    }
+
+    fun onStartDateChange(timeInMillis: Long?) {
+        timeInMillis?.let {
+            val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val date = Date(it)
+            _startDate.value = format.format(date)
+        }
+    }
+
 
     init {
         fetchData()
@@ -42,6 +134,24 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
                     _state.value = HomeState.Loading
                 }
             }
+        }
+    }
+
+    suspend fun addTrip(){
+        viewModelScope.launch {
+            repository.addTrip(
+                AddTripRequest(
+                    name = _name.value,
+                    destination = _destination.value,
+                    totalBudget = _totalBudget.value.toDouble(),
+                    spentAmount = _spentAmount.value.toDouble(),
+                    category = _category.value,
+                    startDate = _startDate.value,
+                    endDate = _endDate.value,
+                    notes = _notes.value
+                )
+            )
+            fetchData()
         }
     }
 }

@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
@@ -28,16 +30,28 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -49,12 +63,17 @@ import com.example.budgetrip.R
 import com.example.budgetrip.data.model.BudgetripResponse
 import com.example.budgetrip.data.model.BudgetripResponseItem
 import com.example.budgetrip.ui.theme.BudgetripTheme
+import com.example.budgetrip.ui.widgets.CustomDialog
+import com.example.budgetrip.ui.widgets.CustomTextField
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import java.util.Calendar
 
 @Composable
 fun HomeScreen(vm: HomeViewModel,modifier: Modifier) {
-
+    val state = vm.state.collectAsStateWithLifecycle()
     LaunchedEffect(true) {
+        vm.fetchData()
         vm.event.collectLatest {
             when (it) {
                 is HomeEvent.showErrorMessage -> {
@@ -64,7 +83,8 @@ fun HomeScreen(vm: HomeViewModel,modifier: Modifier) {
         }
     }
 
-    val state = vm.state.collectAsStateWithLifecycle()
+
+
     when (state.value) {
         is HomeState.Loading -> {
             CircularProgressIndicator()
@@ -72,7 +92,7 @@ fun HomeScreen(vm: HomeViewModel,modifier: Modifier) {
 
         is HomeState.Success -> {
             val data = (state.value as HomeState.Success).data
-            HomeContent(data = data,modifier)
+            HomeContent(data = data,modifier, vm = vm, state = state.value)
         }
 
         is HomeState.Error -> {
@@ -83,29 +103,39 @@ fun HomeScreen(vm: HomeViewModel,modifier: Modifier) {
 }
 
 @Composable
-fun HomeContent(data: BudgetripResponse,modifier: Modifier) {
+fun HomeContent(data: BudgetripResponse,modifier: Modifier,vm: HomeViewModel,state: HomeState) {
     Column(modifier = modifier.padding(horizontal = 10.dp)) {
-        TopSection()
-        TripCartSection(data)
+        TopSection(vm = vm)
+        TripCartSection(data,vm, state = state)
     }
 }
 
 @Composable
-fun TripCartSection(data: BudgetripResponse) {
+fun TripCartSection(data: BudgetripResponse,vm: HomeViewModel,state: HomeState) {
+    var name = vm.name.collectAsStateWithLifecycle()
+    val destination = vm.destination.collectAsStateWithLifecycle()
+    val totalBudget = vm.totalBudget.collectAsStateWithLifecycle()
+    val spentAmount = vm.spentAmount.collectAsStateWithLifecycle()
+    val category = vm.category.collectAsStateWithLifecycle()
+    val startDate = vm.startDate.collectAsStateWithLifecycle()
+    val endDate = vm.endDate.collectAsStateWithLifecycle()
+    val notes = vm.notes.collectAsStateWithLifecycle()
 
-    LazyColumn() {
+    LazyColumn(
+        reverseLayout = true
+    ) {
         items(data) {
             Card(
                 modifier = Modifier
-                    .padding(10.dp)
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background),
+                    .padding(vertical = 10.dp)
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(2.dp)
             ) {
+
                 val progress = it.spentAmount.toFloat() / it.totalBudget.toFloat()
                 val remaining = it.totalBudget - it.spentAmount
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface).padding(16.dp)) {
                     // Title + Tag + Icons Row
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -206,8 +236,12 @@ fun TripCartSection(data: BudgetripResponse) {
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopSection() {
+fun TopSection(vm: HomeViewModel) {
+
+    val scope = rememberCoroutineScope()
+
     Row(modifier = Modifier
         .fillMaxWidth()
         .padding(start = 8.dp, end = 15.dp),horizontalArrangement = Arrangement.SpaceBetween
@@ -220,13 +254,88 @@ fun TopSection() {
             modifier = Modifier
                 .size(50.dp)
                 .clickable {
-
+                    vm.isDialogShown.value = true
                 }
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primary),
             contentAlignment = Alignment.Center
         ) {
             Icon(imageVector = Icons.Default.Add,contentDescription = null, tint = MaterialTheme.colorScheme.background)
+        }
+    }
+    if (vm.isDialogShown.value){
+        CustomDialog(onDismiss = {
+            vm.onDismissDialog()
+        },
+            onConfirm = {
+                vm.onDismissDialog()
+                scope.launch {
+                    vm.addTrip()
+                }
+            },
+            vm = vm
+        )
+    }
+
+    if (vm.isStartDatePickerShown.value){
+        val datePickerState = rememberDatePickerState()
+        val confirmEnabled = remember {
+            derivedStateOf { datePickerState.selectedDateMillis != null }
+        }
+        DatePickerDialog(
+            onDismissRequest = {
+                vm.isStartDatePickerShown.value = false
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        vm.isStartDatePickerShown.value = false
+                        vm.onStartDateChange(datePickerState.selectedDateMillis)
+                    },
+                    enabled = confirmEnabled.value,
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { vm.isStartDatePickerShown.value = false }) { Text("Cancel") }
+            },
+        ) {
+            DatePicker(
+                state = datePickerState,
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+            )
+        }
+    }
+
+    if (vm.isEndDatePickerShown.value){
+        val datePickerState = rememberDatePickerState()
+        val confirmEnabled = remember {
+            derivedStateOf { datePickerState.selectedDateMillis != null }
+        }
+        DatePickerDialog(
+            onDismissRequest = {
+                vm.isEndDatePickerShown.value = false
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        vm.isEndDatePickerShown.value = false
+                        vm.onEndDateChange(datePickerState.selectedDateMillis)
+                    },
+                    enabled = confirmEnabled.value,
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { vm.isEndDatePickerShown.value = false }) { Text("Cancel") }
+            },
+        ) {
+            DatePicker(
+                state = datePickerState,
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+            )
         }
     }
 }

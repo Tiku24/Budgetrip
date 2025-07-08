@@ -11,8 +11,8 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 
-val CustomDark = Color(0xFF272727)
-val CustomBlue = Color(0xFF2196F3)
+val CustomDark = Color(0xFF2F2F2F)
+val CustomBlue = Color(0xFF0065F8)
 val CustomGreen = Color(0xFF50D890)
 val CustomGrey = Color(0xFF717172)
 val CustomWhite = Color(0xFFFFFFFF)
