@@ -1,12 +1,11 @@
 package com.example.budgetrip.ui.features
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.budgetrip.data.model.AddTripRequest
+import com.example.budgetrip.data.model.UpdateTripRequest
 import com.example.budgetrip.data.network.ResultResource
 import com.example.budgetrip.data.repository.HomeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,9 +15,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
@@ -36,9 +32,18 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
     var isEndDatePickerShown = mutableStateOf(false)
         private set
 
+    var isUpdateDialogShown = mutableStateOf(false)
+        private set
+
+    var selectedTripId = mutableStateOf("")
+
     fun onDismissDialog() {
         isDialogShown.value = !isDialogShown.value
     }
+    fun onUpdateDismissDialog() {
+        isUpdateDialogShown.value = !isUpdateDialogShown.value
+    }
+
 
     private val _name = MutableStateFlow("")
     val name = _name.asStateFlow()
@@ -92,7 +97,7 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
     }
 
 
-    fun onEndDateChange(timeInMillis: Long?) {
+    fun endDateFormat(timeInMillis: Long?) {
         timeInMillis?.let {
             val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
             val date = Date(it)
@@ -104,12 +109,31 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
         _notes.value = notes
     }
 
-    fun onStartDateChange(timeInMillis: Long?) {
+
+    fun onStartDateChanged(date: String){
+        _startDate.value = date
+    }
+    fun onEndDateChanged(date: String){
+        _endDate.value = date
+    }
+
+    fun startDateFormat(timeInMillis: Long?) {
         timeInMillis?.let {
             val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
             val date = Date(it)
             _startDate.value = format.format(date)
         }
+    }
+
+    fun clearFields() {
+        _name.value = ""
+        _destination.value = ""
+        _totalBudget.value = ""
+        _spentAmount.value = ""
+        _category.value = ""
+        _startDate.value = ""
+        _endDate.value = ""
+        _notes.value = ""
     }
 
 
@@ -137,7 +161,7 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
         }
     }
 
-    suspend fun addTrip(){
+     fun addTrip(){
         viewModelScope.launch {
             repository.addTrip(
                 AddTripRequest(
@@ -152,6 +176,54 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
                 )
             )
             fetchData()
+        }
+    }
+
+    fun updateTrip(id: String){
+        viewModelScope.launch {
+            val data = repository.updateTrip(
+                id = id,
+                UpdateTripRequest(
+                    name = _name.value,
+                    destination = _destination.value,
+                    totalBudget = _totalBudget.value.toDouble(),
+                    spentAmount = _spentAmount.value.toDouble(),
+                    category = _category.value,
+                    startDate = _startDate.value,
+                    endDate = _endDate.value,
+                    notes = _notes.value
+                )
+            )
+            when(data){
+                is ResultResource.Loading -> {
+                    _state.value = HomeState.Loading
+                }
+                is ResultResource.Success -> {
+                    _event.emit(HomeEvent.showErrorMessage("Updated"))
+                    fetchData()
+                }
+                is ResultResource.Error -> {
+                    _state.value = HomeState.Error(data.message)
+                }
+            }
+        }
+    }
+
+    fun deleteTrip(id: String){
+        viewModelScope.launch {
+            val data = repository.deleteTrip(id)
+            when(data){
+                is ResultResource.Loading -> {
+                    _state.value = HomeState.Loading
+                }
+                is ResultResource.Success -> {
+                    _event.emit(HomeEvent.showErrorMessage("Deleted"))
+                    fetchData()
+                }
+                is ResultResource.Error -> {
+                    _state.value = HomeState.Error(data.message)
+                }
+            }
         }
     }
 }

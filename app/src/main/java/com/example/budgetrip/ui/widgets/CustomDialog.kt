@@ -61,7 +61,7 @@ fun CustomDialog(
             Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(15.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(15.dp)
             ) {
-                Text("Add Trip", style = MaterialTheme.typography.titleLarge)
+                Text(if (vm.isUpdateDialogShown.value) "Update Trip" else "Add Trip", style = MaterialTheme.typography.titleLarge)
                 CustomTextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = name.value,
@@ -115,7 +115,7 @@ fun CustomDialog(
                         modifier = Modifier.height(70.dp).weight(1f),
                         value = startDate.value,
                         onValueChange = {
-
+                            vm.onStartDateChanged(it)
                         },
                         label = "Start Date",
                         readOnly = true,
@@ -134,7 +134,7 @@ fun CustomDialog(
                         value = endDate.value,
                         readOnly = true,
                         onValueChange = {
-
+                            vm.onEndDateChanged(it)
                         },
                         label = "End Date",
                         trailingIcon = {
@@ -170,7 +170,7 @@ fun CustomDialog(
                     Button(onClick = {
                         onConfirm()
                     }) {
-                        Text("Create Trip")
+                        Text(if (vm.isUpdateDialogShown.value) "Update" else "Create Trip")
                     }
                 }
             }

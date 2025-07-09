@@ -1,6 +1,6 @@
 package com.example.budgetrip.data.model
 
-data class AddTripResponse(
+data class UpdateTripResponse(
     val category: String,
     val destination: String,
     val endDate: String,

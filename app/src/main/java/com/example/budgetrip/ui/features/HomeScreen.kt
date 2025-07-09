@@ -1,5 +1,7 @@
 package com.example.budgetrip.ui.features
 
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -26,7 +27,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,14 +36,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -53,31 +50,27 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.budgetrip.R
 import com.example.budgetrip.data.model.BudgetripResponse
-import com.example.budgetrip.data.model.BudgetripResponseItem
 import com.example.budgetrip.ui.theme.BudgetripTheme
 import com.example.budgetrip.ui.widgets.CustomDialog
-import com.example.budgetrip.ui.widgets.CustomTextField
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.util.Calendar
 
 @Composable
 fun HomeScreen(vm: HomeViewModel,modifier: Modifier) {
     val state = vm.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     LaunchedEffect(true) {
         vm.fetchData()
         vm.event.collectLatest {
             when (it) {
                 is HomeEvent.showErrorMessage -> {
-
+                    Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -92,7 +85,7 @@ fun HomeScreen(vm: HomeViewModel,modifier: Modifier) {
 
         is HomeState.Success -> {
             val data = (state.value as HomeState.Success).data
-            HomeContent(data = data,modifier, vm = vm, state = state.value)
+            HomeContent(data = data,modifier, vm = vm,context)
         }
 
         is HomeState.Error -> {
@@ -103,15 +96,15 @@ fun HomeScreen(vm: HomeViewModel,modifier: Modifier) {
 }
 
 @Composable
-fun HomeContent(data: BudgetripResponse,modifier: Modifier,vm: HomeViewModel,state: HomeState) {
+fun HomeContent(data: BudgetripResponse,modifier: Modifier,vm: HomeViewModel,context: Context) {
     Column(modifier = modifier.padding(horizontal = 10.dp)) {
         TopSection(vm = vm)
-        TripCartSection(data,vm, state = state)
+        TripCartSection(data,vm,context)
     }
 }
 
 @Composable
-fun TripCartSection(data: BudgetripResponse,vm: HomeViewModel,state: HomeState) {
+fun TripCartSection(data: BudgetripResponse,vm: HomeViewModel,context: Context) {
     var name = vm.name.collectAsStateWithLifecycle()
     val destination = vm.destination.collectAsStateWithLifecycle()
     val totalBudget = vm.totalBudget.collectAsStateWithLifecycle()
@@ -121,21 +114,24 @@ fun TripCartSection(data: BudgetripResponse,vm: HomeViewModel,state: HomeState) 
     val endDate = vm.endDate.collectAsStateWithLifecycle()
     val notes = vm.notes.collectAsStateWithLifecycle()
 
-    LazyColumn(
-        reverseLayout = true
-    ) {
-        items(data) {
+    LazyColumn() {
+        items(data, key = {it.id}) {
             Card(
                 modifier = Modifier
                     .padding(vertical = 10.dp)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .clickable {
+                        Toast.makeText(context, it.id, Toast.LENGTH_SHORT).show()
+                    },
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(2.dp)
             ) {
 
                 val progress = it.spentAmount.toFloat() / it.totalBudget.toFloat()
                 val remaining = it.totalBudget - it.spentAmount
-                Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface).padding(16.dp)) {
+                Column(modifier = Modifier
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(16.dp)) {
                     // Title + Tag + Icons Row
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -157,8 +153,23 @@ fun TripCartSection(data: BudgetripResponse,vm: HomeViewModel,state: HomeState) 
                                 )
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         )
-                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.padding(start = 8.dp))
-                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.padding(start = 8.dp))
+                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier
+                            .padding(start = 8.dp)
+                            .clickable {
+                                vm.isUpdateDialogShown.value = true
+                                vm.selectedTripId.value = it.id
+                                vm.onNameChange(it.name)
+                                vm.onDestinationChange(it.destination)
+                                vm.onTotalBudgetChange(it.totalBudget.toString())
+                                vm.onSpentAmountChange(it.spentAmount.toString())
+                                vm.onStartDateChanged(it.startDate)
+                                vm.onEndDateChanged(it.endDate)
+                                vm.onCategoryChange(it.category)
+                                vm.onNotesChange(it.notes)
+                            })
+                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.padding(start = 8.dp).clickable{
+                            vm.deleteTrip(it.id)
+                        })
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -185,7 +196,9 @@ fun TripCartSection(data: BudgetripResponse,vm: HomeViewModel,state: HomeState) 
 
                     // Budget Progress
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Budget Progress", style = MaterialTheme.typography.titleMedium)
@@ -233,6 +246,15 @@ fun TripCartSection(data: BudgetripResponse,vm: HomeViewModel,state: HomeState) 
             }
         }
     }
+    if (vm.isUpdateDialogShown.value){
+        CustomDialog(
+            onDismiss = {
+                vm.isUpdateDialogShown.value = false
+            }, onConfirm = {
+                vm.updateTrip(id = vm.selectedTripId.value)
+                vm.onUpdateDismissDialog()
+            }, vm = vm)
+    }
 }
 
 
@@ -255,6 +277,7 @@ fun TopSection(vm: HomeViewModel) {
                 .size(50.dp)
                 .clickable {
                     vm.isDialogShown.value = true
+                    vm.clearFields()
                 }
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primary),
@@ -290,7 +313,7 @@ fun TopSection(vm: HomeViewModel) {
                 TextButton(
                     onClick = {
                         vm.isStartDatePickerShown.value = false
-                        vm.onStartDateChange(datePickerState.selectedDateMillis)
+                        vm.startDateFormat(datePickerState.selectedDateMillis)
                     },
                     enabled = confirmEnabled.value,
                 ) {
@@ -321,7 +344,7 @@ fun TopSection(vm: HomeViewModel) {
                 TextButton(
                     onClick = {
                         vm.isEndDatePickerShown.value = false
-                        vm.onEndDateChange(datePickerState.selectedDateMillis)
+                        vm.endDateFormat(datePickerState.selectedDateMillis)
                     },
                     enabled = confirmEnabled.value,
                 ) {
