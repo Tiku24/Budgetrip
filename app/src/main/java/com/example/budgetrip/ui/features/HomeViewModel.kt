@@ -75,6 +75,13 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
     private val _event = MutableSharedFlow<HomeEvent>()
     val event = _event.asSharedFlow()
 
+    private val _addSpending = MutableStateFlow<Int>(0)
+    val addSpending = _addSpending.asStateFlow()
+
+
+    fun onAddSpending(spend: Int){
+        _addSpending.value = spend
+    }
 
     fun onNameChange(name: String) {
         _name.value = name
@@ -95,7 +102,6 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
     fun onCategoryChange(category: String) {
         _category.value = category
     }
-
 
     fun endDateFormat(timeInMillis: Long?) {
         timeInMillis?.let {
@@ -152,7 +158,7 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
                 is ResultResource.Error -> {
                     _state.value = HomeState.Error(data.message)
                     Log.d("error", "fetchData: ${data.message}")
-                    _event.emit(HomeEvent.showErrorMessage(data.message))
+                    _event.emit(HomeEvent.showErrorMsg(data.message))
                 }
                 is ResultResource.Loading -> {
                     _state.value = HomeState.Loading
@@ -168,7 +174,7 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
                     name = _name.value,
                     destination = _destination.value,
                     totalBudget = _totalBudget.value.toDouble(),
-                    spentAmount = _spentAmount.value.toDouble(),
+                    spentAmount = _addSpending.value.toDouble(),
                     category = _category.value,
                     startDate = _startDate.value,
                     endDate = _endDate.value,
@@ -187,7 +193,7 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
                     name = _name.value,
                     destination = _destination.value,
                     totalBudget = _totalBudget.value.toDouble(),
-                    spentAmount = _spentAmount.value.toDouble(),
+                    spentAmount = (_spentAmount.value.toDouble() + _addSpending.value),
                     category = _category.value,
                     startDate = _startDate.value,
                     endDate = _endDate.value,
@@ -199,7 +205,8 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
                     _state.value = HomeState.Loading
                 }
                 is ResultResource.Success -> {
-                    _event.emit(HomeEvent.showErrorMessage("Updated"))
+                    _event.emit(HomeEvent.onUpdatedTrip("Updated"))
+                    _addSpending.value = 0
                     fetchData()
                 }
                 is ResultResource.Error -> {
@@ -217,7 +224,7 @@ class HomeViewModel @Inject constructor(private val repository: HomeRepository):
                     _state.value = HomeState.Loading
                 }
                 is ResultResource.Success -> {
-                    _event.emit(HomeEvent.showErrorMessage("Deleted"))
+                    _event.emit(HomeEvent.onDeleteTrip("Deleted"))
                     fetchData()
                 }
                 is ResultResource.Error -> {

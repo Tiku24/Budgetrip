@@ -13,10 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -24,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -40,6 +43,7 @@ fun CustomDialog(
     val destination = vm.destination.collectAsStateWithLifecycle()
     val totalBudget = vm.totalBudget.collectAsStateWithLifecycle()
     val spentAmount = vm.spentAmount.collectAsStateWithLifecycle()
+    val addSpending = vm.addSpending.collectAsStateWithLifecycle()
     val category = vm.category.collectAsStateWithLifecycle()
     val startDate = vm.startDate.collectAsStateWithLifecycle()
     val endDate = vm.endDate.collectAsStateWithLifecycle()
@@ -88,15 +92,17 @@ fun CustomDialog(
                         onValueChange = {
                             vm.onTotalBudgetChange(it)
                         },
-                        label = "Total Budget"
+                        label = "Total Budget",
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
                     CustomTextField(
                         modifier = Modifier.height(70.dp).weight(1f),
-                        value = spentAmount.value,
+                        value = addSpending.value.toString(),
                         onValueChange = {
-                            vm.onSpentAmountChange(it)
+                            vm.onAddSpending(it.toInt())
                         },
-                        label = "Spent Amount"
+                        label = "Spent Amount",
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
                 }
                 CustomTextField(
@@ -164,12 +170,12 @@ fun CustomDialog(
                 ) {
                     Button(onClick = {
                         onDismiss()
-                    }) {
+                    }, colors = ButtonDefaults.buttonColors(contentColor = MaterialTheme.colorScheme.background)) {
                         Text("Cancel")
                     }
                     Button(onClick = {
                         onConfirm()
-                    }) {
+                    },colors = ButtonDefaults.buttonColors(contentColor = MaterialTheme.colorScheme.background)) {
                         Text(if (vm.isUpdateDialogShown.value) "Update" else "Create Trip")
                     }
                 }

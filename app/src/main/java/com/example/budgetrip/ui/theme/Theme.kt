@@ -18,11 +18,14 @@ private val DarkColorScheme = darkColorScheme(
     surface = CustomDark,
     onPrimary = CustomWhite,
     onSecondary = CustomWhite,
-    onBackground = CustomWhite,
+    onBackground = CustomDarkGray,
     onSurface = CustomWhite,
     error = CustomRed,
     onError = CustomWhite,
-    surfaceVariant = CustomGrey
+    surfaceVariant = CustomGrey,
+    primaryContainer = CustomDarkGray,
+    onPrimaryContainer = CustomWhite,
+    tertiary = CustomBrown
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -32,11 +35,14 @@ private val LightColorScheme = lightColorScheme(
     surface = CustomWhite,
     onPrimary = CustomDark,
     onSecondary = CustomDark,
-    onBackground = CustomDark,
+    onBackground = CustomLightGray,
     onSurface = CustomDark,
     error = CustomRed,
     onError = CustomWhite,
-    surfaceVariant = CustomGrey
+    surfaceVariant = CustomGrey,
+    primaryContainer = CustomLightGray,
+    onPrimaryContainer = CustomDark,
+    tertiary = CustomWhite
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -53,7 +59,7 @@ private val LightColorScheme = lightColorScheme(
 fun BudgetripTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
