@@ -13,8 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.budgetrip.ui.features.HomeScreen
-import com.example.budgetrip.ui.features.HomeViewModel
+import com.example.budgetrip.ui.features.textextraction.TextExtractScreen
+import com.example.budgetrip.ui.features.home.HomeViewModel
 import com.example.budgetrip.ui.theme.BudgetripTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
             BudgetripTheme {
                 val vm = hiltViewModel<HomeViewModel>()
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    HomeScreen(vm = vm,modifier = Modifier.padding(innerPadding))
+                    TextExtractScreen(modifier = Modifier.padding(innerPadding))
                 }
             }
         }

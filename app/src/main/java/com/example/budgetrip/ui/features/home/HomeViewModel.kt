@@ -1,4 +1,4 @@
-package com.example.budgetrip.ui.features
+package com.example.budgetrip.ui.features.home
 
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
@@ -8,6 +8,7 @@ import com.example.budgetrip.data.model.AddTripRequest
 import com.example.budgetrip.data.model.UpdateTripRequest
 import com.example.budgetrip.data.network.ResultResource
 import com.example.budgetrip.data.repository.HomeRepository
+import com.example.budgetrip.ui.features.home.HomeState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

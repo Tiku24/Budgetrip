@@ -7,8 +7,9 @@ import com.example.budgetrip.data.model.UpdateTripRequest
 import com.example.budgetrip.data.model.UpdateTripResponse
 import com.example.budgetrip.data.network.BudgetripApi
 import com.example.budgetrip.data.network.ResultResource
+import javax.inject.Inject
 
-class HomeRepository(private val budgetripApi: BudgetripApi) {
+class HomeRepository @Inject constructor(private val budgetripApi: BudgetripApi) {
     suspend fun getTrips(): ResultResource<BudgetripResponse> {
         return try {
             val response = budgetripApi.getTrips()

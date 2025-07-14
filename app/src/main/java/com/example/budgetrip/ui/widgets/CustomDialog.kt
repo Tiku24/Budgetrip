@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.budgetrip.ui.features.HomeViewModel
+import com.example.budgetrip.ui.features.home.HomeViewModel
 
 @Composable
 fun CustomDialog(

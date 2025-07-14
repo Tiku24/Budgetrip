@@ -1,4 +1,4 @@
-package com.example.budgetrip.ui.features
+package com.example.budgetrip.ui.features.home
 
 import com.example.budgetrip.data.model.BudgetripResponse
 

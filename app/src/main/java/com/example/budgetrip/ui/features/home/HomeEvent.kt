@@ -1,4 +1,4 @@
-package com.example.budgetrip.ui.features
+package com.example.budgetrip.ui.features.home
 
 sealed class HomeEvent {
     data class showErrorMsg(val message: String) : HomeEvent()

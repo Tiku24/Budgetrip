@@ -1,4 +1,4 @@
-package com.example.budgetrip.ui.features
+package com.example.budgetrip.ui.features.home
 
 import android.content.Context
 import android.widget.Toast
@@ -46,7 +46,6 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -61,13 +60,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.budgetrip.R
 import com.example.budgetrip.data.model.BudgetripResponse
+import com.example.budgetrip.ui.features.home.HomeState
+import com.example.budgetrip.ui.features.home.HomeViewModel
 import com.example.budgetrip.ui.theme.BudgetripTheme
 import com.example.budgetrip.ui.widgets.CustomDialog
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
-fun HomeScreen(vm: HomeViewModel,modifier: Modifier) {
+fun HomeScreen(vm: HomeViewModel, modifier: Modifier) {
     val state = vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -110,7 +111,7 @@ fun HomeScreen(vm: HomeViewModel,modifier: Modifier) {
 }
 
 @Composable
-fun HomeContent(data: BudgetripResponse,modifier: Modifier,vm: HomeViewModel,context: Context) {
+fun HomeContent(data: BudgetripResponse, modifier: Modifier, vm: HomeViewModel, context: Context) {
     Column(modifier = modifier.padding(horizontal = 10.dp)) {
         TopSection(vm = vm)
         TripCartSection(data,vm,context)
@@ -118,7 +119,7 @@ fun HomeContent(data: BudgetripResponse,modifier: Modifier,vm: HomeViewModel,con
 }
 
 @Composable
-fun TripCartSection(data: BudgetripResponse,vm: HomeViewModel,context: Context) {
+fun TripCartSection(data: BudgetripResponse, vm: HomeViewModel, context: Context) {
 
     LazyColumn() {
         item {

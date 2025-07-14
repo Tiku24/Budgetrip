@@ -1,7 +1,9 @@
 package com.example.budgetrip.di
 
 import com.example.budgetrip.data.network.BudgetripApi
+import com.example.budgetrip.data.network.TextExtractApi
 import com.example.budgetrip.data.repository.HomeRepository
+import com.example.budgetrip.data.repository.TextExtractRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,27 +15,27 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object NetworkModule {
+object ExtractTextDi {
 
     @Provides
     @Singleton
-    @Named("Budgetrip")
-    fun provideRetrofit(): Retrofit {
+    @Named("TextExtract")
+    fun provideRetrofitForTextExtract(): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://10.140.163.103:8080")  //10.140.163.103
+            .baseUrl("https://api.ocr.space")  //10.140.163.103
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 
-    @Provides
     @Singleton
-    fun provideBudgetripApi(@Named("Budgetrip") retrofit: Retrofit): BudgetripApi {
-        return retrofit.create(BudgetripApi::class.java)
+    @Provides
+    fun provideTextExtractApi(@Named("TextExtract") retrofit: Retrofit): TextExtractApi {
+        return retrofit.create(TextExtractApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideRepository(budgetripApi: BudgetripApi): HomeRepository {
-        return HomeRepository(budgetripApi)
+    fun provideRepo(textExtractApi: TextExtractApi): TextExtractRepository {
+        return TextExtractRepository(textExtractApi)
     }
 }
