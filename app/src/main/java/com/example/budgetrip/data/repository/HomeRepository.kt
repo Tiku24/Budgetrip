@@ -19,7 +19,7 @@ class HomeRepository @Inject constructor(private val budgetripApi: BudgetripApi)
                 ResultResource.Error("Data Not Found")
             }
         }catch (e: Exception){
-            ResultResource.Error("Check Internet Connection")
+            ResultResource.Error("${e.message} Check Internet Connection")
             }
         }
 

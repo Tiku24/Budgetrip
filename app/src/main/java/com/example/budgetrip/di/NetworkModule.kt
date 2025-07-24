@@ -17,17 +17,16 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    @Named("Budgetrip")
     fun provideRetrofit(): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://10.140.163.103:8080")  //10.140.163.103
+            .baseUrl("http://10.180.219.215:8080")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 
     @Provides
     @Singleton
-    fun provideBudgetripApi(@Named("Budgetrip") retrofit: Retrofit): BudgetripApi {
+    fun provideBudgetripApi(retrofit: Retrofit): BudgetripApi {
         return retrofit.create(BudgetripApi::class.java)
     }
 

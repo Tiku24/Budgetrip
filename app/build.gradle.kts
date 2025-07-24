@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+    kotlin("plugin.serialization")
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -65,4 +67,9 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation( "androidx.compose.material:material-icons-extended:1.7.8")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("androidx.navigation:navigation-compose:2.9.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+
+    implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
+    implementation("com.google.firebase:firebase-ai")
 }
