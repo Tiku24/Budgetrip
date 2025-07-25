@@ -56,7 +56,7 @@ fun NavApp(modifier: Modifier = Modifier) {
             }
             composable<TextExtractScreen> {
                 showFloatingActionButton.value = false
-                TextExtractScreen(modifier = modifier)
+                TextExtractScreen(modifier = modifier, navController = navController)
             }
             composable<UploadScanImage> {
 

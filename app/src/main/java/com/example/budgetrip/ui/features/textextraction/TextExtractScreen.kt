@@ -1,5 +1,6 @@
 package com.example.budgetrip.ui.features.textextraction
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
@@ -96,6 +97,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.example.budgetrip.data.model.ReceiptItem
 import com.example.budgetrip.ui.widgets.ConcentricCircleLoader
 import com.example.budgetrip.ui.widgets.SlowCircularProgressIndicator
@@ -103,7 +105,7 @@ import kotlinx.coroutines.flow.collectLatest
 
 
 @Composable
-fun TextExtractScreen(modifier: Modifier,vm: TextExtractViewModel= hiltViewModel()) {
+fun TextExtractScreen(navController: NavController,modifier: Modifier,vm: TextExtractViewModel= hiltViewModel()) {
 
     LaunchedEffect(true) {
         vm.event.collectLatest {
@@ -117,7 +119,26 @@ fun TextExtractScreen(modifier: Modifier,vm: TextExtractViewModel= hiltViewModel
     val state = vm.state.collectAsStateWithLifecycle()
     when (state.value) {
         is TextExtractState.Idle ->{
-            CameraCaptureWithButton(viewModel = vm,modifier = modifier)
+            val permission = listOf(Manifest.permission.CAMERA)
+            val isGranted = vm.isGranted.collectAsStateWithLifecycle()
+
+            val permissionLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestMultiplePermissions()
+            ) { permissions ->
+                // Update state in ViewModel based on granted status
+                val allGranted = permissions.values.all { it }
+                vm.setPermissionGranted(allGranted)
+            }
+
+            LaunchedEffect(Unit) {
+                if (!isGranted.value) {
+                    permissionLauncher.launch(permission.toTypedArray())
+                }
+            }
+
+            if (isGranted.value){
+                CameraCaptureWithButton(vm,navController)
+            }
         }
 
         is TextExtractState.Loading -> {
@@ -216,7 +237,7 @@ fun TextExtractScreen(modifier: Modifier,vm: TextExtractViewModel= hiltViewModel
 }
 
 @Composable
-fun CameraCaptureWithButton(viewModel: TextExtractViewModel,modifier: Modifier) {
+fun CameraCaptureWithButton(viewModel: TextExtractViewModel,navController: NavController) {
     val state = viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -252,7 +273,8 @@ fun CameraCaptureWithButton(viewModel: TextExtractViewModel,modifier: Modifier) 
         },
         onScanClick = {
             cameraLauncher.launch(null)
-        }
+        },
+        navController = navController
     )
 }
 
@@ -281,7 +303,7 @@ fun ShowText(item: ReceiptItem) {
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-fun ScanUploadCard(onUploadClick: () -> Unit,onScanClick: () -> Unit) {
+fun ScanUploadCard(onUploadClick: () -> Unit,onScanClick: () -> Unit,navController: NavController) {
     BoxWithConstraints(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -298,7 +320,7 @@ fun ScanUploadCard(onUploadClick: () -> Unit,onScanClick: () -> Unit) {
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = { /* Handle close action */ }) {
+                        IconButton(onClick = { navController.popBackStack() }) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
                                 contentDescription = "Close",

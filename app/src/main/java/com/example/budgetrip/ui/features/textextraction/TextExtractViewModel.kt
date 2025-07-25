@@ -2,6 +2,7 @@ package com.example.budgetrip.ui.features.textextraction
 
 import android.graphics.Bitmap
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.budgetrip.data.model.ReceiptItem
@@ -22,8 +23,15 @@ class TextExtractViewModel @Inject constructor(private val model: GenerativeMode
     private val _state = MutableStateFlow<TextExtractState>(TextExtractState.Idle)
     val state = _state.asStateFlow()
 
+    private val _isGranted = MutableStateFlow(false)
+    val isGranted = _isGranted.asStateFlow()
+
     private val _event = MutableSharedFlow<TextExtractEvent>()
     val event = _event.asSharedFlow()
+
+    fun setPermissionGranted(granted: Boolean){
+        _isGranted.value = granted
+    }
 
     fun getTextFormImages(bitmap: Bitmap) {
         viewModelScope.launch(Dispatchers.IO) {
