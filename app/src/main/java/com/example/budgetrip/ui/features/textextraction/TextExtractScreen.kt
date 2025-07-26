@@ -9,20 +9,12 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -31,41 +23,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.CallSplit
-import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CallSplit
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.HelpOutline
-import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.Web
-import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Receipt
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -78,21 +55,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -101,6 +70,7 @@ import androidx.navigation.NavController
 import com.example.budgetrip.data.model.ReceiptItem
 import com.example.budgetrip.ui.widgets.ConcentricCircleLoader
 import com.example.budgetrip.ui.widgets.SlowCircularProgressIndicator
+import com.example.budgetrip.ui.widgets.TransparentOutlinedTextField
 import kotlinx.coroutines.flow.collectLatest
 
 
@@ -183,50 +153,8 @@ fun TextExtractScreen(navController: NavController,modifier: Modifier,vm: TextEx
         is TextExtractState.Success -> {
             val data = ((state.value) as TextExtractState.Success).data
             val person = remember { mutableStateOf(1) }
-            LazyColumn(modifier.padding(horizontal = 10.dp)) {
-                item {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onPrimary)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Split bill arrangement",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 18.sp,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                }
 
-                item {
-                    Row(modifier = Modifier.fillMaxWidth().padding(top = 20.dp), horizontalArrangement = Arrangement.spacedBy(30.dp)) {
-                        Text(text = "Item Name", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text("Quantity",color = MaterialTheme.colorScheme.onPrimary,fontWeight = FontWeight.Bold)
-                        Text("Price",color = MaterialTheme.colorScheme.onPrimary,fontWeight = FontWeight.Bold)
-                    }
-                }
-
-                items(data) {
-                    ShowText(it)
-                }
-
-                item {
-                    Column {
-                        val total = data.sumOf { it.price.toDouble() * it.quantity }
-                        val splitBill = remember { mutableStateOf(0.0) }
-                        Text(text = "Total: $total", color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(top = 10.dp).fillMaxWidth(), textAlign = TextAlign.End, fontWeight = FontWeight.Bold)
-                        OutlinedTextField(value = person.value.toString(), onValueChange = {
-                            person.value = it.toInt()
-                        })
-                        Button(onClick = {
-                            splitBill.value = total / person.value
-                        }) {
-                            Text(text = "Split")
-                        }
-                        Text(text = if (splitBill.value.equals(0.0)) "" else "Each person should pay: ${splitBill.value}", color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(top = 10.dp).fillMaxWidth(), textAlign = TextAlign.End, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
+            BillSplitterScreen(data = data, modifier = modifier)
         }
 
         is TextExtractState.Error -> {
@@ -278,26 +206,6 @@ fun CameraCaptureWithButton(viewModel: TextExtractViewModel,navController: NavCo
     )
 }
 
-
-@Composable
-fun ShowText(item: ReceiptItem) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(5.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(30.dp),
-        ) {
-            Text(text = item.item_name, color = MaterialTheme.colorScheme.onPrimary)
-            Spacer(modifier = Modifier.weight(1f))
-            Text(text = "${ item.quantity }", color = MaterialTheme.colorScheme.onPrimary)
-            Spacer(modifier = Modifier.width(5.dp))
-            Text(text = item.price, color = MaterialTheme.colorScheme.onPrimary)
-        }
-    }
-}
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -368,7 +276,9 @@ fun ActionButton(icon: ImageVector, text: String, onClick: () -> Unit) {
         Surface(
             shape = CircleShape,
             color = MaterialTheme.colorScheme.onPrimary,
-            modifier = Modifier.size(80.dp).clickable(onClick = onClick)
+            modifier = Modifier
+                .size(80.dp)
+                .clickable(onClick = onClick)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
@@ -386,5 +296,128 @@ fun ActionButton(icon: ImageVector, text: String, onClick: () -> Unit) {
             color = MaterialTheme.colorScheme.onPrimary,
             style = MaterialTheme.typography.titleMedium
         )
+    }
+}
+
+
+
+@Composable
+fun BillSplitterScreen(data: List<ReceiptItem>,modifier: Modifier) {
+    val enterTax = remember { mutableStateOf<String?>("") }
+    var peopleCount by remember { mutableStateOf<String?>("1") }
+    val subTotal = data.sumOf { it.price.toDouble() * it.quantity }
+//    val subtotal = items.sumOf { it.price * it.quantity }
+    var total = subTotal + (enterTax.value?.toDoubleOrNull() ?: 0.0) // example 10% tax
+    val splitBill = remember { mutableStateOf(0.0) }
+
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
+        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 15.dp),verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onPrimary)
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = "Bill Splitter",
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 18.sp,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+        }
+        data.forEach { item ->
+            BillItemRow(item)
+        }
+        HorizontalDivider()
+        Text(
+            "Summary",
+            modifier = Modifier.padding(start = 16.dp, top = 16.dp,bottom = 8.dp),
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
+        SummaryRow("Subtotal", subTotal)
+        TransparentOutlinedTextField(value = enterTax.value.toString(), onValueChange = { enterTax.value = it })
+        SummaryRow("Total", total)
+
+        Text(
+            "Split Money",
+            modifier = Modifier.padding(start = 16.dp, top = 16.dp),
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
+
+        OutlinedTextField(
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            value = peopleCount!!,
+            onValueChange = { peopleCount = it },
+            placeholder = { Text("Number of People", color = MaterialTheme.colorScheme.scrim) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            textStyle = TextStyle(color = MaterialTheme.colorScheme.onPrimary),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedContainerColor = MaterialTheme.colorScheme.onBackground,
+                focusedBorderColor = MaterialTheme.colorScheme.surface,
+                unfocusedBorderColor = MaterialTheme.colorScheme.surface
+            )
+        )
+
+        SummaryRow("Amount Per Person", splitBill.value)
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            Button(
+                onClick = {
+                    splitBill.value = total / peopleCount!!.toInt()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+            ) {
+                Text("Calculate Split", color = Color(0xFF0D181C), fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+fun BillItemRow(item: ReceiptItem) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(item.item_name, color = MaterialTheme.colorScheme.onPrimary)
+            Text(item.price, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.scrim)
+        }
+        Text("${item.quantity}", modifier = Modifier.width(24.dp), textAlign = TextAlign.Center,color = MaterialTheme.colorScheme.onPrimary)
+    }
+}
+
+@Composable
+fun SummaryRow(label: String, value: Double) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.scrim)
+        Text("%.2f".format(value), fontSize = 14.sp, color = MaterialTheme.colorScheme.onPrimary)
     }
 }
