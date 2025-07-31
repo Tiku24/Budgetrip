@@ -2,6 +2,7 @@ package com.example.budgetrip.ui.features.home
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.InsertDriveFile
 import androidx.compose.material.icons.outlined.ModeEdit
 import androidx.compose.material.icons.outlined.PinDrop
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -68,7 +70,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
-fun HomeScreen(vm: HomeViewModel, modifier: Modifier) {
+fun HomeScreen(vm: HomeViewModel, modifier: Modifier= Modifier) {
     val state = vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -104,8 +106,20 @@ fun HomeScreen(vm: HomeViewModel, modifier: Modifier) {
         }
 
         is HomeState.Error -> {
-            val errorMessage = (state.value as HomeState.Error).message
-            Text(errorMessage)
+            Column(
+                Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                val message = (state.value as HomeState.Error).message
+                Image(painterResource(R.drawable.error),contentDescription = null)
+                Text(text = message, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onPrimary)
+                TextButton(onClick = {
+                    vm.fetchData()
+                }) {
+                    Text(text = "Refresh", color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.bodyLarge)
+                }
+            }
         }
     }
 }

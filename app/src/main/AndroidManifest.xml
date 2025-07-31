@@ -16,8 +16,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Budgetrip"
         tools:targetApi="31"
+        >
 
-        android:usesCleartextTraffic="true">
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

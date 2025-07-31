@@ -9,6 +9,7 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -58,6 +59,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -67,7 +70,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.example.budgetrip.data.model.ReceiptItem
+import com.example.budgetrip.R
+import com.example.budgetrip.data.model.Item
+import com.example.budgetrip.data.model.TextExtractResponse
 import com.example.budgetrip.ui.widgets.ConcentricCircleLoader
 import com.example.budgetrip.ui.widgets.SlowCircularProgressIndicator
 import com.example.budgetrip.ui.widgets.TransparentOutlinedTextField
@@ -75,7 +80,7 @@ import kotlinx.coroutines.flow.collectLatest
 
 
 @Composable
-fun TextExtractScreen(navController: NavController,modifier: Modifier,vm: TextExtractViewModel= hiltViewModel()) {
+fun TextExtractScreen(navController: NavController, modifier: Modifier= Modifier, vm: TextExtractViewModel= hiltViewModel()) {
 
     LaunchedEffect(true) {
         vm.event.collectLatest {
@@ -121,7 +126,7 @@ fun TextExtractScreen(navController: NavController,modifier: Modifier,vm: TextEx
             ) {
                 SlowCircularProgressIndicator(
                     modifier = Modifier.size(50.dp),
-                    strokeWidth = 15.dp,
+                    strokeWidth = 12.dp,
                     color = MaterialTheme.colorScheme.onPrimary,
                     speedMultiplier = 0.25f // slow it down
                 )
@@ -154,12 +159,19 @@ fun TextExtractScreen(navController: NavController,modifier: Modifier,vm: TextEx
             val data = ((state.value) as TextExtractState.Success).data
             val person = remember { mutableStateOf(1) }
 
-            BillSplitterScreen(data = data, modifier = modifier)
+            BillSplitterScreen(data = data, modifier = modifier, navController = navController)
         }
 
         is TextExtractState.Error -> {
-            val errorMessage = (state.value as TextExtractState.Error).message
-
+            Column(
+                Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                val message = (state.value as TextExtractState.Error).message
+                Image(painterResource(R.drawable.process_error),contentDescription = null)
+                Text(text = message, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onPrimary)
+            }
         }
     }
 }
@@ -246,7 +258,8 @@ fun ScanUploadCard(onUploadClick: () -> Unit,onScanClick: () -> Unit,navControll
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding),
+                    .padding(innerPadding)
+                ,
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -302,12 +315,12 @@ fun ActionButton(icon: ImageVector, text: String, onClick: () -> Unit) {
 
 
 @Composable
-fun BillSplitterScreen(data: List<ReceiptItem>,modifier: Modifier) {
+fun BillSplitterScreen(data: TextExtractResponse, modifier: Modifier, navController: NavController) {
     val enterTax = remember { mutableStateOf<String?>("") }
     var peopleCount by remember { mutableStateOf<String?>("1") }
-    val subTotal = data.sumOf { it.price.toDouble() * it.quantity }
+    val subTotal = data.items.sumOf { it.price.toDouble() * it.quantity }
 //    val subtotal = items.sumOf { it.price * it.quantity }
-    var total = subTotal + (enterTax.value?.toDoubleOrNull() ?: 0.0) // example 10% tax
+    var total = subTotal + (data.tax.amount.toDoubleOrNull() ?: 0.0) // example 10% tax
     val splitBill = remember { mutableStateOf(0.0) }
 
 
@@ -316,17 +329,37 @@ fun BillSplitterScreen(data: List<ReceiptItem>,modifier: Modifier) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 15.dp),verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onPrimary)
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = "Bill Splitter",
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 18.sp,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 15.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center // <-- Center the whole content
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 15.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.align(Alignment.CenterStart).clickable{
+                        navController.popBackStack()
+                    }
+                )
+
+                Text(
+                    text = "Bill Splitter",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 18.sp,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
         }
-        data.forEach { item ->
+        data.items.forEach { item ->
             BillItemRow(item)
         }
         HorizontalDivider()
@@ -338,7 +371,7 @@ fun BillSplitterScreen(data: List<ReceiptItem>,modifier: Modifier) {
             color = MaterialTheme.colorScheme.onPrimary
         )
         SummaryRow("Subtotal", subTotal)
-        TransparentOutlinedTextField(value = enterTax.value.toString(), onValueChange = { enterTax.value = it })
+        SummaryRow("Tax", data.tax.amount.toDoubleOrNull() ?: 0.0)
         SummaryRow("Total", total)
 
         Text(
@@ -393,7 +426,7 @@ fun BillSplitterScreen(data: List<ReceiptItem>,modifier: Modifier) {
 }
 
 @Composable
-fun BillItemRow(item: ReceiptItem) {
+fun BillItemRow(item: Item) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -402,8 +435,8 @@ fun BillItemRow(item: ReceiptItem) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
-            Text(item.item_name, color = MaterialTheme.colorScheme.onPrimary)
-            Text(item.price, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.scrim)
+            Text(item.item_name, color = MaterialTheme.colorScheme.onPrimary,style = MaterialTheme.typography.bodyLarge)
+            Text(item.price, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.scrim)
         }
         Text("${item.quantity}", modifier = Modifier.width(24.dp), textAlign = TextAlign.Center,color = MaterialTheme.colorScheme.onPrimary)
     }
@@ -417,7 +450,7 @@ fun SummaryRow(label: String, value: Double) {
             .padding(horizontal = 16.dp, vertical = 2.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.scrim)
-        Text("%.2f".format(value), fontSize = 14.sp, color = MaterialTheme.colorScheme.onPrimary)
+        Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.scrim)
+        Text("%.2f".format(value), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onPrimary)
     }
 }

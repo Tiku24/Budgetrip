@@ -1,5 +1,6 @@
 package com.example.budgetrip.data.repository
 
+import android.net.http.HttpException
 import com.example.budgetrip.data.model.AddTripRequest
 import com.example.budgetrip.data.model.AddTripResponse
 import com.example.budgetrip.data.model.BudgetripResponse
@@ -7,6 +8,10 @@ import com.example.budgetrip.data.model.UpdateTripRequest
 import com.example.budgetrip.data.model.UpdateTripResponse
 import com.example.budgetrip.data.network.BudgetripApi
 import com.example.budgetrip.data.network.ResultResource
+import retrofit2.Response
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import javax.inject.Inject
 
 class HomeRepository @Inject constructor(private val budgetripApi: BudgetripApi) {
@@ -19,7 +24,13 @@ class HomeRepository @Inject constructor(private val budgetripApi: BudgetripApi)
                 ResultResource.Error("Data Not Found")
             }
         }catch (e: Exception){
-            ResultResource.Error("${e.message} Check Internet Connection")
+            val error = when (e) {
+                is UnknownHostException -> "No Internet Connection"
+                is SocketTimeoutException -> "Server Timeout"
+                is ConnectException -> "Server is unreachable"
+                else -> "Something went wrong: ${e.localizedMessage ?: "Unknown error"}"
+            }
+            ResultResource.Error(error)
             }
         }
 

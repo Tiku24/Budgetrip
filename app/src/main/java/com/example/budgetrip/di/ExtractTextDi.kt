@@ -19,6 +19,6 @@ object ExtractTextDi {
     fun provideGenerativeModel(): GenerativeModel {
         return Firebase.ai(
             backend = GenerativeBackend.googleAI()
-        ).generativeModel("gemini-2.5-flash")
+        ).generativeModel("gemini-2.5-pro")
     }
 }
